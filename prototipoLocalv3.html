@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Layer5 Helpdesk Inteligente — MVP Integrado & Bootstrap Modal</title>
+<!-- Bootstrap 5 CSS para a formatação padrão dos campos e modal -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+:root {
+  --navy: #1d4368;
+  --royal: #4864ad;
+  --azul-claro: #6aa4d2;
+  --verde: #95c444;
+  --laranja: #e67e22;
+  --fundo: #f0f4f8;
+  --branco: #ffffff;
+  --texto: #2c3e50;
+  --cinza: #95a5a6;
+  --vermelho: #c0392b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Inter, sans-serif; background: var(--fundo); color: var(--texto); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* HEADER */
+header { background: var(--navy); color: var(--branco); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 10; }
+header h1 { font-size: 1.2rem; font-weight: 600; margin: 0; }
+header .tagline { font-size: 0.75rem; opacity: 0.85; }
+.nav-btns { display: flex; gap: 8px; }
+.nav-btn { background: rgba(255,255,255,0.15); color: var(--branco); border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: background 0.2s; }
+.nav-btn:hover, .nav-btn.active { background: var(--royal); }
+
+/* MAIN LAYOUT */
+.main-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+/* LEFT PANEL - ATENDIMENTO */
+.atendimento-panel { width: 400px; background: var(--branco); border-right: 1px solid #e0e6ed; display: flex; flex-direction: column; flex-shrink: 0; transition: width 0.3s; }
+.atendimento-panel.collapsed { width: 0; overflow: hidden; border: none; }
+.panel-header { padding: 14px 16px; background: #f8fafc; border-bottom: 1px solid #e0e6ed; font-weight: 600; color: var(--navy); display: flex; justify-content: space-between; align-items: center; }
+.transcricao-area { flex: 1; padding: 16px; overflow-y: auto; background: #fafbfc; min-height: 180px; }
+.transcricao-chunk { padding: 8px 12px; margin-bottom: 6px; background: var(--branco); border-radius: 6px; border-left: 3px solid var(--azul-claro); font-size: 0.82rem; line-height: 1.4; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+.ai-suggestions { padding: 14px 16px; border-top: 1px solid #e0e6ed; background: #f0f7ff; max-height: 38%; overflow-y: auto; }
+.ai-suggestions h4 { font-size: 0.72rem; text-transform: uppercase; color: var(--royal); margin-bottom: 8px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+.suggestion-card { background: var(--branco); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; border: 1px solid #e0e6ed; font-size: 0.78rem; }
+.suggestion-card .label { font-size: 0.65rem; color: var(--cinza); text-transform: uppercase; }
+.suggestion-card .value { font-weight: 600; color: var(--navy); margin-top: 2px; }
+.suggestion-card.impedido { border-color: var(--laranja); background: #fff8f0; }
+
+.controls { padding: 12px 16px; border-top: 1px solid #e0e6ed; display: flex; gap: 8px; flex-wrap: wrap; background: var(--branco); }
+.custom-btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.2s; flex: 1; min-width: 90px; text-align: center; }
+.btn-navy { background: var(--navy); color: var(--branco); }
+.btn-navy:hover { background: var(--royal); color: #fff; }
+.btn-verde { background: var(--verde); color: var(--branco); }
+.btn-verde:hover { background: #7db33a; color: #fff; }
+
+/* RIGHT PANEL (DASHBOARD) */
+.right-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.tabs { display: flex; background: var(--branco); border-bottom: 2px solid #e0e6ed; padding: 0 16px; flex-shrink: 0; overflow-x: auto; }
+.tab { padding: 12px 16px; cursor: pointer; font-size: 0.85rem; color: var(--cinza); border-bottom: 3px solid transparent; white-space: nowrap; transition: all 0.2s; }
+.tab.active { color: var(--navy); border-bottom-color: var(--royal); font-weight: 600; }
+.tab:hover { color: var(--royal); }
+.content { flex: 1; padding: 20px; overflow-y: auto; }
+.panel-view { display: none; }
+.panel-view.active { display: block; }
+
+/* KANBAN */
+.kanban { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; min-height: 400px; }
+.kanban-col { background: #e8ecf1; border-radius: 8px; padding: 10px; min-width: 0; }
+.kanban-col h3 { font-size: 0.65rem; text-transform: uppercase; color: var(--cinza); margin-bottom: 10px; text-align: center; word-wrap: break-word; }
+.kanban-card { background: var(--branco); border-radius: 6px; padding: 10px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.15s; border-left: 3px solid var(--royal); font-size: 0.78rem; word-wrap: break-word; }
+.kanban-card:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+.kanban-card.impedido { border-left-color: var(--laranja); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 1px 2px rgba(0,0,0,0.06); } 50% { box-shadow: 0 0 0 4px rgba(230,126,34,0.2); } }
+
+/* BADGES */
+.badge-custom { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; }
+.badge-hardware { background: #e8f4fd; color: var(--royal); }
+.badge-software { background: #f0e6ff; color: #7c3aed; }
+.badge-rede { background: #e6fff0; color: #059669; }
+.badge-contas { background: #fff3e0; color: #d35400; }
+.badge-infra { background: #fce4ec; color: #c62828; }
+.badge-telecom { background: #e0f7fa; color: #00838f; }
+.badge-impedido { background: var(--laranja); color: var(--branco); }
+
+/* METRICS */
+.cards-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.metric-card { background: var(--branco); border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.metric-card .label { font-size: 0.7rem; color: var(--cinza); text-transform: uppercase; letter-spacing: 0.5px; }
+.metric-card .value { font-size: 1.6rem; font-weight: 700; color: var(--navy); margin-top: 4px; }
+.metric-card .sub { font-size: 0.75rem; color: var(--verde); margin-top: 2px; }
+
+/* GAUGE */
+.gauge-container { display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 10px; }
+.gauge { position: relative; width: 180px; height: 180px; flex-shrink: 0; }
+.gauge svg { transform: rotate(-90deg); }
+.gauge circle { fill: none; stroke-width: 12; }
+.gauge .bg { stroke: #e8ecf1; }
+.gauge .fg { stroke: var(--verde); stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+.gauge .label-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+.gauge .pct { font-size: 2rem; font-weight: 700; color: var(--navy); }
+.gauge .pct-label { font-size: 0.75rem; color: var(--cinza); }
+
+/* OPERADORES & GAMIFICACAO */
+.operadores-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.op-section h3 { font-size: 0.85rem; color: var(--navy); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--royal); }
+.op-card { background: var(--branco); border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+.op-status { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.op-status.disponivel { background: var(--verde); }
+.op-status.em-ligacao { background: var(--laranja); }
+.op-status.pausa { background: var(--cinza); }
+.ranking-item { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid #eee; background: var(--branco); border-radius: 6px; margin-bottom: 6px; }
+.ranking-pos { width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: var(--branco); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; margin-right: 12px; flex-shrink: 0; }
+.ranking-pos.top1 { background: #f1c40f; color: #333; }
+.ranking-pos.top2 { background: #bdc3c7; color: #333; }
+.ranking-pos.top3 { background: #cd7f32; color: #fff; }
+
+/* KB */
+.kb-card { background: var(--branco); border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-left: 4px solid var(--royal); animation: fadeIn 0.4s ease; }
+.kb-card.novo { border-left-color: var(--verde); background: #fbfdf9; }
+
+/* SMARTPHONE DRAWER */
+.phone-drawer {
+  position: fixed;
+  top: 0;
+  right: -420px;
+  width: 400px;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1500;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 16px;
+}
+.phone-drawer.open { right: 0; }
+.smartphone-case {
+  width: 350px;
+  height: 700px;
+  max-height: 94vh;
+  background: #111827;
+  border-radius: 40px;
+  padding: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 4px #374151;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.phone-notch {
+  width: 130px;
+  height: 20px;
+  background: #111827;
+  border-radius: 0 0 14px 14px;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.phone-notch::after { content: ''; width: 10px; height: 10px; background: #1f2937; border-radius: 50%; }
+.phone-screen { flex: 1; background: #f8fafc; border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; position: relative; font-size: 0.85rem; }
+.phone-header { background: var(--navy); color: #fff; padding: 24px 14px 12px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--royal); }
+.phone-content { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.phone-photo-preview { width: 100%; height: 110px; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--cinza); border: 2px dashed #cbd5e1; font-size: 0.8rem; margin-top: 8px; }
+.phone-photo-preview.has-photo { border: none; background: #0f172a; }
+.phone-btn-close { position: absolute; top: -12px; right: -12px; background: #ef4444; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-weight: 700; border: 2px solid #fff; z-index: 60; }
+
+/* TOAST */
+.toast-layer5 { position: fixed; bottom: 20px; left: 20px; background: var(--navy); color: var(--branco); padding: 12px 20px; border-radius: 8px; font-size: 0.85rem; box-shadow: 0 4px 14px rgba(0,0,0,0.25); transform: translateY(120px); opacity: 0; transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2500; max-width: 440px; border-left: 4px solid var(--azul-claro); line-height: 1.35; }
+.toast-layer5.show { transform: translateY(0); opacity: 1; }
+.toast-layer5.success { background: #22543d; border-left-color: var(--verde); }
+.toast-layer5.warning { background: #7b341e; border-left-color: var(--laranja); }
+.toast-layer5.info { background: var(--navy); border-left-color: var(--azul-claro); }
+
+.typing-indicator { display: inline-flex; gap: 4px; padding: 8px 12px; background: var(--branco); border-radius: 6px; border-left: 3px solid var(--royal); margin-bottom: 6px; }
+.typing-dot { width: 6px; height: 6px; background: var(--cinza); border-radius: 50%; animation: typing 1.4s infinite; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Layer5 Helpdesk Inteligente</h1>
+    <div class="tagline">Plataforma Integrada: IA Whisper + Groq/Llama, Gamificação e Base Dinâmica</div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn active" id="btnToggleAtendimento" onclick="toggleAtendimento()">📞 Atendimento</button>
+    <button class="nav-btn" id="btnOpenPhone" onclick="togglePhoneDrawer()">📱 App Técnico</button>
+  </div>
+</header>
+
+<div class="main-container">
+  <!-- CENTRAL DE ATENDIMENTO (ESQUERDA) -->
+  <div class="atendimento-panel" id="atendimentoPanel">
+    <div class="panel-header">
+      <span>🎙️ Central de Atendimento</span>
+      <span style="font-size:0.65rem;color:var(--cinza)">Whisper + Groq/Llama</span>
+    </div>
+    <div class="transcricao-area" id="transcricaoArea">
+      <div style="text-align:center;padding:40px 20px;color:var(--cinza);font-size:0.85rem">
+        Clique em <strong>"Simular Ligação"</strong> para gerar a transcrição em áudio com Whisper
+      </div>
+    </div>
+    <div class="ai-suggestions" id="aiSuggestions" style="display:none">
+      <h4>🤖 Diagnóstico IA em Tempo Real</h4>
+      <div id="suggestionsContent"></div>
+    </div>
+    <div class="controls">
+      <button class="custom-btn btn-navy" id="btnSimular" onclick="simularLigacao()">📞 Simular Ligação</button>
+      <button class="custom-btn btn-verde" id="btnAbrirTicket" onclick="abrirTicket()" disabled>✅ Abrir Ticket</button>
+      <button class="custom-btn btn-outline-secondary" id="btnLimpar" onclick="limparAtendimento()">🗑️ Limpar</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PRINCIPAL (DIREITA) -->
+  <div class="right-panel">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('kanban', this)">📋 Kanban</div>
+      <div class="tab" onclick="switchTab('tickets', this)">📄 Tickets</div>
+      <div class="tab" onclick="switchTab('setor', this)">🏢 Estado por Setor</div>
+      <div class="tab" onclick="switchTab('operadores', this)">👥 Operadores</div>
+      <div class="tab" onclick="switchTab('performance', this)">⚡ Performance</div>
+      <div class="tab" onclick="switchTab('gamificacao', this)">🏆 Gamificação</div>
+      <div class="tab" onclick="switchTab('kb', this)">📚 Base de Conhecimento</div>
+    </div>
+
+    <div class="content">
+      <!-- 1. KANBAN -->
+      <div id="view-kanban" class="panel-view active">
+        <div class="cards-row">
+          <div class="metric-card"><div class="label">Tickets Abertos</div><div class="value" id="totalAbertos">0</div><div class="sub">Em tempo real</div></div>
+          <div class="metric-card"><div class="label">Impedimentos</div><div class="value" style="color:var(--laranja)" id="totalImpedidos">0</div><div class="sub">Alertas da IA</div></div>
+          <div class="metric-card"><div class="label">Resolvidos Hoje</div><div class="value" style="color:var(--verde)" id="totalResolvidos">0</div><div class="sub">Tempo médio: 2h14m</div></div>
+          <div class="metric-card"><div class="label">SLA Cumprido</div><div class="value" style="color:var(--verde)">91%</div><div class="sub">Meta: 90%</div></div>
+        </div>
+        <div class="kanban" id="kanbanBoard"></div>
+      </div>
+
+      <!-- 2. TABELA DE TICKETS -->
+      <div id="view-tickets" class="panel-view">
+        <div class="bg-white rounded shadow-sm p-3 table-responsive">
+          <table class="table table-hover align-middle mb-0" style="font-size:0.85rem">
+            <thead class="table-dark">
+              <tr><th>ID</th><th>Descrição</th><th>Categoria</th><th>Secretaria</th><th>Status</th><th>Prioridade</th><th>Origem IA</th></tr>
+            </thead>
+            <tbody id="ticketsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3. ESTADO POR SETOR -->
+      <div id="view-setor" class="panel-view">
+        <div class="cards-row">
+          <div class="metric-card"><div class="label">Maior Demanda</div><div class="value">Saúde</div><div class="sub">34 chamados</div></div>
+          <div class="metric-card"><div class="label">Maior Tempo Médio</div><div class="value">Infraestrutura</div><div class="sub">4h32m médio</div></div>
+          <div class="metric-card"><div class="label">Taxa de Resolução</div><div class="value" style="color:var(--verde)">87%</div><div class="sub">Rede lidera com 96%</div></div>
+        </div>
+        <div class="bg-white rounded shadow-sm p-3 table-responsive">
+          <table class="table table-hover mb-0" style="font-size:0.85rem">
+            <thead class="table-dark">
+              <tr><th>Secretaria</th><th>Total</th><th>Abertos</th><th>Resolvidos</th><th>Tempo Médio</th><th>SLA</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Saúde</td><td>34</td><td>12</td><td>22</td><td>2h45min</td><td>88%</td></tr>
+              <tr><td>Educação</td><td>28</td><td>8</td><td>20</td><td>1h58min</td><td>93%</td></tr>
+              <tr><td>Finanças</td><td>18</td><td>5</td><td>13</td><td>3h12min</td><td>85%</td></tr>
+              <tr><td>Urbanismo</td><td>15</td><td>7</td><td>8</td><td>2h30min</td><td>90%</td></tr>
+              <tr><td>Assistência Social</td><td>12</td><td>4</td><td>8</td><td>1h45min</td><td>95%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 4. OPERADORES -->
+      <div id="view-operadores" class="panel-view">
+        <div class="operadores-grid">
+          <div class="op-section">
+            <h3>🖥️ Atendimento Remoto</h3>
+            <div class="op-card"><div class="op-status disponivel"></div><div class="flex-grow-1"><div class="fw-bold">Kathlyn dos Santos</div><div class="text-muted" style="font-size:0.75rem">Disponível · 5 chamados hoje</div></div></div>
+            <div class="op-card"><div class="op-status em-ligacao"></div><div class="flex-grow-1"><div class="fw-bold">William Ricardo de Farias</div><div class="text-muted" style="font-size:0.75rem">Em ligação de triagem</div></div></div>
+          </div>
+          <div class="op-section">
+            <h3>📍 Técnicos de Campo</h3>
+            <div class="op-card"><div class="op-status disponivel"></div><div class="flex-grow-1"><div class="fw-bold">Andre Miranda Neto</div><div class="text-muted" style="font-size:0.75rem">Conectado via App Técnico · Disponível</div></div></div>
+            <div class="op-card"><div class="op-status em-ligacao"></div><div class="flex-grow-1"><div class="fw-bold">Muriel Tramontin</div><div class="text-muted" style="font-size:0.75rem">Em missão de campo (Finanças)</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. PERFORMANCE -->
+      <div id="view-performance" class="panel-view">
+        <div class="gauge-container">
+          <div class="gauge">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <circle class="bg" cx="90" cy="90" r="78"></circle>
+              <circle class="fg" cx="90" cy="90" r="78" stroke-dasharray="490" stroke-dashoffset="44"></circle>
+            </svg>
+            <div class="label-center"><div class="pct">91%</div><div class="pct-label">SLA Cumprido</div></div>
+          </div>
+          <div class="flex-grow-1">
+            <div class="cards-row">
+              <div class="metric-card"><div class="label">Mediana Resolução</div><div class="value">1h48m</div><div class="sub">↓ 32% vs baseline</div></div>
+              <div class="metric-card"><div class="label">Retrabalho</div><div class="value" style="color:var(--verde)">0%</div><div class="sub">Eliminação de viagens vazias</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. GAMIFICAÇÃO -->
+      <div id="view-gamificacao" class="panel-view">
+        <div class="cards-row">
+          <div class="metric-card"><div class="label">Top Performer</div><div class="value" id="topPerformerName" style="font-size:1.15rem">Muriel T.</div><div class="sub" id="topPerformerScore">1250 pts</div></div>
+          <div class="metric-card"><div class="label">Missões Semana</div><div class="value" id="totalMissoesSemana">186</div><div class="sub">↑ 18%</div></div>
+          <div class="metric-card"><div class="label">Média Avaliações</div><div class="value" style="color:var(--verde)">4.8 ★</div><div class="sub">Excelente</div></div>
+        </div>
+        <div class="operadores-grid">
+          <div class="op-section">
+            <h3>🏆 Classificação Semanal</h3>
+            <div id="rankingList"></div>
+          </div>
+          <div class="op-section">
+            <h3>🎯 Insígnias do Time</h3>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge bg-primary p-2">⚡ Resolvedor Ágil</span>
+              <span class="badge bg-info text-dark p-2">🔧 Expert em Hardware</span>
+              <span class="badge bg-success p-2">✨ Zero Retrabalho</span>
+              <span class="badge bg-warning text-dark p-2">⭐ Atendimento 5 Estrelas</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. BASE DE CONHECIMENTO (TESTE PARALELO) -->
+      <div id="view-kb" class="panel-view">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="m-0 text-navy fw-bold">📚 Base de Conhecimento Inteligente</h5>
+            <small class="text-muted">Artigos criados e aprendidos continuamente por IA e campo</small>
+          </div>
+          <button class="btn btn-outline-primary btn-sm" onclick="simularCriacaoManualKB()">➕ Indexar Artigo Manualmente com IA</button>
+        </div>
+        <div class="cards-row">
+          <div class="metric-card"><div class="label">Artigos Ativos</div><div class="value" id="kbTotalArtigos">1</div><div class="sub">Indexados na vector store</div></div>
+          <div class="metric-card"><div class="label">Reaproveitamento</div><div class="value" style="color:var(--verde)">84%</div><div class="sub">Resoluções reutilizadas</div></div>
+        </div>
+        <div id="kbList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     MODAL DE DETALHES DO TICKET (FRAMEWORK BOOTSTRAP 5)
+======================================================== -->
+<div class="modal fade" id="bootstrapTicketModal" tabindex="-1" aria-labelledby="modalTicketLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <!-- Modal Header -->
+      <div class="modal-header bg-dark text-white">
+        <div>
+          <h5 class="modal-title fw-bold" id="modalTicketLabel">Ticket TKT-0000</h5>
+          <small class="text-secondary" id="modalSubtitle">Categoria · Secretaria</small>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body p-4">
+        <!-- Linha 1: Visão Geral em Grid -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <label class="form-label text-muted small fw-bold text-uppercase">Status</label>
+            <div id="modFieldStatus"></div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label text-muted small fw-bold text-uppercase">Prioridade</label>
+            <div class="fw-bold" id="modFieldPrioridade">Alta</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label text-muted small fw-bold text-uppercase">Técnico Atribuído</label>
+            <div class="fw-bold text-primary" id="modFieldTecnico">Não atribuído</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label text-muted small fw-bold text-uppercase">Secretaria</label>
+            <div class="fw-bold" id="modFieldSecretaria">Geral</div>
+          </div>
+        </div>
+
+        <!-- Linha 2: Descrição Principal -->
+        <div class="card bg-light border-0 mb-4">
+          <div class="card-body">
+            <h6 class="card-title fw-bold text-secondary mb-2">Descrição do Chamado</h6>
+            <p class="card-text mb-0" id="modFieldDescricao"></p>
+          </div>
+        </div>
+
+        <!-- Linha 3: Card com Dados da Transcrição Whisper -->
+        <div class="card border mb-4" id="modCardTranscricao">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+            <span class="fw-bold small text-navy">🎙️ Transcrição Completa da Ligação (Whisper AI)</span>
+            <span class="badge bg-secondary" id="modBadgeOrigem">Origem Telefônica</span>
+          </div>
+          <div class="card-body p-3 bg-light">
+            <div class="border rounded p-2 bg-white small" style="max-height:140px; overflow-y:auto;" id="modFieldAudioTranscricao">
+              <em>Nenhum áudio gravado para este ticket de abertura manual.</em>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linha 4: Card de Análise da IA (Llama / Groq) -->
+        <div class="card border-primary mb-4" id="modCardIA">
+          <div class="card-header bg-primary text-white py-2 small fw-bold">
+            🤖 Diagnóstico & Enriquecimento Automático (Llama / Groq)
+          </div>
+          <div class="card-body p-3">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Causa Raiz Provável</div>
+                  <strong class="small" id="modIaCausa">-</strong>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Acurácia do Diagnóstico</div>
+                  <strong class="text-success small" id="modIaConfianca">-</strong>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-2 border rounded bg-light">
+                  <div class="text-muted small">Solução Sugerida na KB</div>
+                  <strong class="text-primary small" id="modIaKb">-</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linha 5: Solução Realizada e Comprovação -->
+        <div class="card border-success mb-2" id="modCardSolucao" style="display:none">
+          <div class="card-header bg-success text-white py-2 small fw-bold d-flex justify-content-between">
+            <span>✅ Resolução Registrada em Campo</span>
+            <span id="modStatusResolucao" class="badge bg-white text-success">Resolvido</span>
+          </div>
+          <div class="card-body p-3">
+            <p class="mb-2 small" id="modTextoSolucao"></p>
+            <div id="modFotoEvidencia" class="mt-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer com Botão de Teste Paralelo de KB -->
+      <div class="modal-footer bg-light d-flex justify-content-between">
+        <div>
+          <button type="button" class="btn btn-outline-primary btn-sm" id="btnIndexarKbModal" onclick="indexarTicketAtualNaKB()">
+            🧠 Indexar Solução na Base de Conhecimento (IA)
+          </button>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     SMARTPHONE LATERAL (APP DO TÉCNICO)
+======================================================== -->
+<div class="phone-drawer" id="phoneDrawer">
+  <div class="smartphone-case">
+    <div class="phone-btn-close" onclick="togglePhoneDrawer()" title="Fechar Celular">✕</div>
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="phone-header">
+        <div class="d-flex align-items-center gap-2">
+          <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width:28px;height:28px;font-size:0.75rem">AM</div>
+          <div>
+            <div class="fw-bold" style="font-size:0.8rem">Andre Miranda</div>
+            <div style="font-size:0.65rem;opacity:0.85">Nível 4 · Técnico Campo</div>
+          </div>
+        </div>
+        <span class="badge bg-success" id="phoneXpDisplay">850 XP</span>
+      </div>
+
+      <div class="phone-content" id="phoneBody">
+        <!-- Estado Vazio -->
+        <div id="phoneEmptyState" class="text-center py-5 text-muted">
+          <div style="font-size:3rem">📡</div>
+          <div class="fw-bold text-dark mt-2">Pronto para Missões</div>
+          <small>Aguardando novo chamado despachado...</small>
+        </div>
+
+        <!-- Card de Missão -->
+        <div id="phoneMissionContainer" style="display:none; flex-direction:column; gap:10px;">
+          <div class="bg-white p-3 rounded shadow-sm border">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="badge bg-warning text-dark">⚡ NOVA MISSÃO</span>
+              <span class="fw-bold text-success small">+100 XP</span>
+            </div>
+            <div class="fw-bold text-navy" id="phoneTicketId">TKT-0000</div>
+            <div class="small my-1" id="phoneTicketDesc">Descrição...</div>
+            <div class="text-muted small">Local: <strong id="phoneTicketSec">Secretaria</strong></div>
+            <button class="btn btn-primary btn-sm w-100 mt-2" id="btnPhoneAceitar" onclick="phoneAceitarMissao()">🚀 Aceitar & Iniciar</button>
+          </div>
+
+          <!-- Execução da Missão -->
+          <div class="bg-white p-3 rounded shadow-sm border" id="phoneExecutionForm" style="display:none">
+            <label class="form-label small fw-bold text-muted text-uppercase mb-1">Ações Realizadas</label>
+            <textarea id="phoneObservacoes" rows="2" class="form-control form-control-sm mb-2" placeholder="Descreva os procedimentos..."></textarea>
+
+            <label class="form-label small fw-bold text-muted text-uppercase mb-1">Foto da Correção</label>
+            <div class="phone-photo-preview" id="phonePhotoBox">
+              <span>📷 Nenhuma foto anexada</span>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm w-100 mt-2" onclick="phoneSimularFoto()">📸 Registrar Foto do Reparo</button>
+
+            <button class="btn btn-success btn-sm w-100 mt-3" id="btnPhoneFinalizar" onclick="phoneFinalizarMissao()" disabled>🏆 Concluir Missão (+100 XP)</button>
+          </div>
+        </div>
+
+        <!-- Sucesso -->
+        <div id="phoneSuccessState" class="text-center py-4" style="display:none">
+          <div style="font-size:3rem">🎉</div>
+          <h6 class="fw-bold text-success mt-2">Missão Cumprida com Sucesso!</h6>
+          <div class="small text-muted">+100 XP creditados na sua conta.</div>
+          <button class="btn btn-primary btn-sm w-100 mt-3" onclick="phoneReset()">Ficar Disponível</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-layer5" id="toastLayer5"></div>
+
+<!-- Bootstrap 5 Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// === DADOS GLOBAIS ===
+const tickets = [
+  {
+    id:'TKT-9188',
+    desc:'Impressora finanças erro 0x800f0922 aguardando peça',
+    cat:'hardware',
+    sec:'Finanças',
+    status:'Pendente/Impedido',
+    pri:5,
+    impedido:true,
+    tecnico:'Muriel T.',
+    transcricao: ["Relatada falha no spooler de impressão e mensagem de erro 0x800f0922."],
+    analiseIA: { causa: 'Falha na porta USB / Driver Corrompido', confianca: '91%', kb: 'KB-001' }
+  },
+  {
+    id:'TKT-14142',
+    desc:'Monitor não liga após atualização Windows',
+    cat:'hardware',
+    sec:'Saúde',
+    status:'Em Andamento',
+    pri:3,
+    tecnico:'Kathlyn S.',
+    transcricao: ["Estação de enfermagem: monitor secundário parou de responder após reinicialização."],
+    analiseIA: { causa: 'Resolução fora de faixa', confianca: '88%', kb: 'KB-Geral' }
+  },
+  {
+    id:'TKT-3368',
+    desc:'Wi-Fi instável no bloco B educação',
+    cat:'rede',
+    sec:'Educação',
+    status:'Novo',
+    pri:4,
+    tecnico:null,
+    transcricao: ["Professores sem acesso aos diários online."],
+    analiseIA: { causa: 'Saturação de Access Point', confianca: '95%', kb: 'KB-Redes' }
+  }
+];
+
+const rankingData = [
+  {pos:1, name:'Muriel Tramontin von Linsingen', missoes:47, sla:'94.5%', nota:'4.7', points:1250},
+  {pos:2, name:'Kathlyn dos Santos', missoes:42, sla:'92.1%', nota:'4.8', points:1180},
+  {pos:3, name:'William Ricardo de Farias', missoes:38, sla:'89.3%', nota:'4.5', points:980},
+  {pos:4, name:'Andre Luiz Oliveira', missoes:35, sla:'91.0%', nota:'4.6', points:920},
+  {pos:5, name:'Andre Miranda Neto', missoes:31, sla:'88.7%', nota:'4.4', points:850}
+];
+
+const kbData = [
+  {
+    id: 'KB-001',
+    title: 'Falha de comunicação 0x800f0922 e Spooler Travado',
+    categoria: 'Hardware / Impressoras',
+    autor: 'Equipe N2 Layer5',
+    data: '10/10/2026',
+    solucao: 'Reiniciar o serviço Spooler e reinstalar o driver oficial. Se persistir, substituir porta física.'
+  }
+];
+
+const kanbanCols = ['Novo','Em Triagem','Em Andamento','Pendente/Impedido','Resolvido','Fechado'];
+const badgeClass = {hardware:'badge-hardware',software:'badge-software',rede:'badge-rede',contas:'badge-contas',infraestrutura:'badge-infra',telecom:'badge-telecom'};
+
+// Transcrição Whisper
+const transcricaoScript = [
+  "Alô, bom dia, aqui é a Maria do setor financeiro...",
+  "A nossa impressora principal de emissão de NF parou do nada com código 0x800f0922...",
+  "Já reiniciamos mas ela continua sem responder ao computador...",
+  "Estamos com fila de processos e precisamos com urgência de um técnico aqui."
+];
+
+let transcricaoIndex = 0;
+let transcricaoTimer = null;
+let transcricaoBuffer = [];
+let analiseBufferIA = null;
+let activeMissionTicket = null;
+let ticketModalInstance = null;
+
+// === TRANSCRIÇÃO & IA ===
+function simularLigacao() {
+  transcricaoIndex = 0;
+  transcricaoBuffer = [];
+  analiseBufferIA = null;
+  document.getElementById('btnSimular').disabled = true;
+  document.getElementById('btnAbrirTicket').disabled = true;
+  document.getElementById('transcricaoArea').innerHTML = '';
+  document.getElementById('aiSuggestions').style.display = 'none';
+
+  showToast('📞 Ligação recebida — Whisper gravando e transcrevendo...', 'info');
+
+  transcricaoTimer = setInterval(() => {
+    if (transcricaoIndex >= transcricaoScript.length) {
+      clearInterval(transcricaoTimer);
+      document.getElementById('btnAbrirTicket').disabled = false;
+      document.getElementById('btnSimular').disabled = false;
+      analisarComIA();
+      return;
+    }
+
+    const chunk = transcricaoScript[transcricaoIndex];
+    transcricaoBuffer.push(chunk);
+
+    const div = document.createElement('div');
+    div.className = 'transcricao-chunk';
+    div.textContent = chunk;
+    document.getElementById('transcricaoArea').appendChild(div);
+    document.getElementById('transcricaoArea').scrollTop = document.getElementById('transcricaoArea').scrollHeight;
+
+    transcricaoIndex++;
+  }, 1000);
+}
+
+function analisarComIA() {
+  showToast('🤖 Llama / Groq analisando áudio e gerando metadados...', 'warning');
+
+  analiseBufferIA = {
+    categoria: 'Hardware → Impressora',
+    prioridade: 5,
+    causa: 'Travamento do Spooler / Falha cabo USB',
+    confianca: '96.4%',
+    kb: 'KB-001: Impressora erro 0x800f0922'
+  };
+
+  setTimeout(() => {
+    document.getElementById('aiSuggestions').style.display = 'block';
+    document.getElementById('suggestionsContent').innerHTML = `
+      <div class="suggestion-card"><div class="label">Categoria & Criticidade</div><div class="value text-danger">P5 - Urgente (Finanças)</div></div>
+      <div class="suggestion-card"><div class="label">Causa Identificada</div><div class="value">${analiseBufferIA.causa}</div></div>
+      <div class="suggestion-card"><div class="label">Confiança IA</div><div class="value text-success">${analiseBufferIA.confianca}</div></div>
+    `;
+    showToast('✅ Diagnóstico da IA pronto! Clique em "Abrir Ticket".', 'success');
+  }, 1200);
+}
+
+// === CRIAR TICKET COM DADOS INJETADOS ===
+function abrirTicket() {
+  const newId = 'TKT-' + (Math.floor(Math.random()*9000)+1000);
+  const newTicket = {
+    id: newId,
+    desc: 'Falha impressora fiscal erro 0x800f0922 (Triagem Telefônica)',
+    cat: 'hardware',
+    sec: 'Finanças',
+    status: 'Novo',
+    pri: 5,
+    impedido: false,
+    tecnico: null,
+    // Dados injetados da ligação
+    transcricao: [...transcricaoBuffer],
+    analiseIA: analiseBufferIA ? {...analiseBufferIA} : { causa: 'Análise básica', confianca: '90%', kb: 'KB-001' },
+    solucaoRealizada: null,
+    fotoEvidencia: null
+  };
+
+  tickets.unshift(newTicket);
+  renderKanban();
+  renderTicketsTable();
+  limparAtendimento();
+
+  showToast(`✅ ${newId} gerado com dados da ligação e IA integrados!`, 'success');
+  switchTab('kanban');
+
+  // Prepara envio para app técnico
+  despacharParaSmartphone(newTicket);
+}
+
+function limparAtendimento() {
+  clearInterval(transcricaoTimer);
+  transcricaoIndex = 0;
+  document.getElementById('transcricaoArea').innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--cinza);font-size:0.85rem">Clique em <strong>"Simular Ligação"</strong> para gerar a transcrição em áudio com Whisper</div>';
+  document.getElementById('aiSuggestions').style.display = 'none';
+  document.getElementById('btnSimular').disabled = false;
+  document.getElementById('btnAbrirTicket').disabled = true;
+}
+
+// === SMARTPHONE DO TÉCNICO ===
+function despacharParaSmartphone(ticket) {
+  activeMissionTicket = ticket;
+  const drawer = document.getElementById('phoneDrawer');
+  drawer.classList.add('open');
+  document.getElementById('btnOpenPhone').classList.add('active');
+
+  document.getElementById('phoneEmptyState').style.display = 'none';
+  document.getElementById('phoneSuccessState').style.display = 'none';
+  document.getElementById('phoneMissionContainer').style.display = 'flex';
+  document.getElementById('phoneExecutionForm').style.display = 'none';
+  document.getElementById('btnPhoneAceitar').style.display = 'block';
+
+  document.getElementById('phoneTicketId').textContent = ticket.id;
+  document.getElementById('phoneTicketDesc').textContent = ticket.desc;
+  document.getElementById('phoneTicketSec').textContent = ticket.sec;
+  document.getElementById('phoneObservacoes').value = '';
+  document.getElementById('phonePhotoBox').className = 'phone-photo-preview';
+  document.getElementById('phonePhotoBox').innerHTML = '<span>📷 Nenhuma foto anexada</span>';
+  document.getElementById('btnPhoneFinalizar').disabled = true;
+
+  showToast(`📱 Missão recebida no celular do técnico para ${ticket.id}!`, 'info');
+}
+
+function phoneAceitarMissao() {
+  if (!activeMissionTicket) return;
+  activeMissionTicket.status = 'Em Andamento';
+  activeMissionTicket.tecnico = 'Andre Miranda Neto';
+  renderKanban();
+  renderTicketsTable();
+
+  document.getElementById('btnPhoneAceitar').style.display = 'none';
+  document.getElementById('phoneExecutionForm').style.display = 'block';
+  document.getElementById('phoneObservacoes').value = 'Substituído cabo de comunicação e realizado reset do spooler.';
+
+  showToast(`🚀 ${activeMissionTicket.id} em andamento pelo técnico Andre Miranda.`, 'info');
+}
+
+function phoneSimularFoto() {
+  if (!activeMissionTicket) return;
+  activeMissionTicket.fotoEvidencia = true;
+  const box = document.getElementById('phonePhotoBox');
+  box.className = 'phone-photo-preview has-photo text-white d-flex flex-column justify-content-center align-items-center';
+  box.innerHTML = `<span style="font-size:1.5rem">🖨️📸</span><small class="text-success fw-bold">Foto Comprobatória Anexada</small>`;
+  document.getElementById('btnPhoneFinalizar').disabled = false;
+
+  showToast('📸 Foto do reparo registrada com sucesso no aplicativo!', 'success');
+}
+
+function phoneFinalizarMissao() {
+  if (!activeMissionTicket) return;
+  const solucao = document.getElementById('phoneObservacoes').value || 'Reparo concluído com sucesso.';
+
+  activeMissionTicket.status = 'Resolvido';
+  activeMissionTicket.solucaoRealizada = solucao;
+  renderKanban();
+  renderTicketsTable();
+
+  // Gamificação
+  const tec = rankingData.find(t => t.name.includes('Andre Miranda'));
+  if (tec) {
+    tec.points += 100;
+    tec.missoes += 1;
+    rankingData.sort((a,b) => b.points - a.points);
+    rankingData.forEach((t, i) => t.pos = i + 1);
+    renderGamificacao();
+    document.getElementById('phoneXpDisplay').textContent = `${tec.points} XP`;
+  }
+
+  document.getElementById('phoneMissionContainer').style.display = 'none';
+  document.getElementById('phoneSuccessState').style.display = 'block';
+
+  showToast(`🏆 Missão Concluída no App! +100 XP computados para Andre Miranda.`, 'success');
+}
+
+function phoneReset() {
+  activeMissionTicket = null;
+  document.getElementById('phoneSuccessState').style.display = 'none';
+  document.getElementById('phoneEmptyState').style.display = 'block';
+}
+
+function togglePhoneDrawer() {
+  const drawer = document.getElementById('phoneDrawer');
+  const btn = document.getElementById('btnOpenPhone');
+  drawer.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+// === FLUXO PARALELO: BASE DE CONHECIMENTO (KB) ===
+let ticketEmModalAtual = null;
+
+function indexarTicketAtualNaKB() {
+  if (!ticketEmModalAtual) return;
+  
+  showToast(`🤖 Groq/Llama lendo resolução e enriquecendo a Base de Conhecimento...`, 'warning');
+
+  setTimeout(() => {
+    const novoKbId = 'KB-00' + (kbData.length + 1);
+    const novoArtigo = {
+      id: novoKbId,
+      title: `Procedimento Resolutivo: ${ticketEmModalAtual.desc}`,
+      categoria: `${ticketEmModalAtual.cat.toUpperCase()} / ${ticketEmModalAtual.sec}`,
+      autor: `IA Assistente (Aprendizado via ${ticketEmModalAtual.tecnico || 'Equipe'})`,
+      data: 'Hoje (Em tempo real)',
+      solucao: ticketEmModalAtual.solucaoRealizada || 'Causa tratada com redefinição de portas e validação de testes práticos.'
+    };
+
+    kbData.unshift(novoArtigo);
+    renderKnowledgeBase();
+    showToast(`✨ Novo artigo [${novoKbId}] indexado com sucesso na Base de Conhecimento!`, 'success');
+  }, 1500);
+}
+
+function simularCriacaoManualKB() {
+  showToast('🧠 Indexando novo conhecimento independente via IA...', 'info');
+  const novoKbId = 'KB-00' + (kbData.length + 1);
+  kbData.unshift({
+    id: novoKbId,
+    title: 'Recuperação de Acesso e Timeout em Sistemas Corporativos',
+    categoria: 'Software / AD',
+    autor: 'IA Autonomous Learner',
+    data: 'Agora',
+    solucao: 'Limpeza de cache DNS local (ipconfig /flushdns) e revalidação de tokens OAuth do usuário.'
+  });
+  renderKnowledgeBase();
+  showToast(`✅ Artigo ${novoKbId} adicionado à base!`, 'success');
+}
+
+// === RENDERIZAÇÃO DO MODAL EM BOOTSTRAP 5 ===
+function showTicketModal(tk) {
+  ticketEmModalAtual = tk;
+
+  document.getElementById('modalTicketLabel').textContent = `${tk.id} — ${tk.desc}`;
+  document.getElementById('modalSubtitle').textContent = `Setor: ${tk.sec} | Categoria: ${tk.cat.toUpperCase()}`;
+  document.getElementById('modFieldStatus').innerHTML = `<span class="badge ${tk.status === 'Resolvido' ? 'bg-success' : tk.status === 'Em Andamento' ? 'bg-primary' : 'bg-warning text-dark'}">${tk.status}</span>`;
+  document.getElementById('modFieldPrioridade').textContent = '★'.repeat(tk.pri);
+  document.getElementById('modFieldTecnico').textContent = tk.tecnico || 'Não atribuído';
+  document.getElementById('modFieldSecretaria').textContent = tk.sec;
+  document.getElementById('modFieldDescricao').textContent = tk.desc;
+
+  // Transcrição Whisper
+  const boxTranscricao = document.getElementById('modFieldAudioTranscricao');
+  if (tk.transcricao && tk.transcricao.length > 0) {
+    boxTranscricao.innerHTML = tk.transcricao.map(t => `<div class="mb-1 text-dark">• ${t}</div>`).join('');
+  } else {
+    boxTranscricao.innerHTML = '<span class="text-muted">Chamado registrado diretamente no sistema, sem gravação de áudio.</span>';
+  }
+
+  // Análise da IA
+  if (tk.analiseIA) {
+    document.getElementById('modIaCausa').textContent = tk.analiseIA.causa || 'Verificação em campo';
+    document.getElementById('modIaConfianca').textContent = tk.analiseIA.confianca || '92%';
+    document.getElementById('modIaKb').textContent = tk.analiseIA.kb || 'KB-001';
+  }
+
+  // Solução Realizada
+  const cardSolucao = document.getElementById('modCardSolucao');
+  if (tk.solucaoRealizada) {
+    cardSolucao.style.display = 'block';
+    document.getElementById('modTextoSolucao').textContent = tk.solucaoRealizada;
+    document.getElementById('modFotoEvidencia').innerHTML = tk.fotoEvidencia 
+      ? '<span class="badge bg-primary">📷 Comprovante fotográfico validado</span>' 
+      : '<span class="text-muted small">Sem fotos anexadas</span>';
+  } else {
+    cardSolucao.style.display = 'none';
+  }
+
+  // Abre Modal com Bootstrap
+  if (!ticketModalInstance) {
+    ticketModalInstance = new bootstrap.Modal(document.getElementById('bootstrapTicketModal'));
+  }
+  ticketModalInstance.show();
+}
+
+// === RENDERIZAÇÃO DOS PAINÉIS ===
+function renderKanban() {
+  const board = document.getElementById('kanbanBoard');
+  board.innerHTML = '';
+  kanbanCols.forEach(col => {
+    const colTickets = tickets.filter(t => t.status === col);
+    const colDiv = document.createElement('div');
+    colDiv.className = 'kanban-col';
+    colDiv.innerHTML = `<h3>${col} (${colTickets.length})</h3>`;
+    colTickets.forEach(tk => {
+      const card = document.createElement('div');
+      card.className = 'kanban-card' + (tk.impedido ? ' impedido' : '');
+      card.onclick = () => showTicketModal(tk);
+      card.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="badge-custom ${badgeClass[tk.cat]||''}">${tk.cat}</span>
+          <small class="text-muted">${tk.id}</small>
+        </div>
+        <div style="margin:4px 0;line-height:1.25">${tk.desc}</div>
+        ${tk.impedido ? '<span class="badge-custom badge-impedido">⚠ Impedido</span>' : ''}
+        <div class="text-muted" style="font-size:0.65rem;margin-top:4px">${tk.sec} · P${tk.pri}${tk.tecnico ? ' · '+tk.tecnico : ''}</div>
+      `;
+      colDiv.appendChild(card);
+    });
+    board.appendChild(colDiv);
+  });
+
+  document.getElementById('totalAbertos').textContent = tickets.filter(t => !['Resolvido','Fechado'].includes(t.status)).length;
+  document.getElementById('totalImpedidos').textContent = tickets.filter(t => t.impedido).length;
+  document.getElementById('totalResolvidos').textContent = tickets.filter(t => t.status === 'Resolvido').length;
+}
+
+function renderTicketsTable() {
+  const tbody = document.getElementById('ticketsTableBody');
+  tbody.innerHTML = '';
+  tickets.forEach(tk => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => showTicketModal(tk);
+    tr.innerHTML = `
+      <td class="fw-bold">${tk.id}</td>
+      <td>${tk.desc}</td>
+      <td><span class="badge-custom ${badgeClass[tk.cat]||''}">${tk.cat}</span></td>
+      <td>${tk.sec}</td>
+      <td><span class="badge ${tk.status === 'Resolvido' ? 'bg-success' : 'bg-secondary'}">${tk.status}</span></td>
+      <td>${'★'.repeat(tk.pri)}</td>
+      <td>${tk.transcricao && tk.transcricao.length ? '<span class="badge bg-info text-dark">🎙️ Whisper + IA</span>' : '<span class="text-muted small">Manual</span>'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderGamificacao() {
+  const top = rankingData[0];
+  document.getElementById('topPerformerName').textContent = top.name.split(' ')[0] + ' ' + (top.name.split(' ')[1] ? top.name.split(' ')[1][0] + '.' : '');
+  document.getElementById('topPerformerScore').textContent = `${top.points} pts`;
+
+  const list = document.getElementById('rankingList');
+  list.innerHTML = '';
+  rankingData.forEach(item => {
+    const posClass = item.pos === 1 ? 'top1' : item.pos === 2 ? 'top2' : item.pos === 3 ? 'top3' : '';
+    const div = document.createElement('div');
+    div.className = 'ranking-item';
+    div.innerHTML = `
+      <div class="ranking-pos ${posClass}">${item.pos}</div>
+      <div class="flex-grow-1">
+        <div class="fw-bold" style="font-size:0.85rem">${item.name}</div>
+        <div class="text-muted" style="font-size:0.7rem">${item.missoes} missões · SLA ${item.sla}</div>
+      </div>
+      <div class="fw-bold text-navy">${item.points} pts</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function renderKnowledgeBase() {
+  const container = document.getElementById('kbList');
+  container.innerHTML = '';
+  document.getElementById('kbTotalArtigos').textContent = kbData.length;
+
+  kbData.forEach((kb, idx) => {
+    const card = document.createElement('div');
+    card.className = 'kb-card' + (idx === 0 ? ' novo' : '');
+    card.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h6 class="fw-bold text-navy m-0">${kb.id}: ${kb.title}</h6>
+        <span class="badge bg-light text-dark border">${kb.categoria}</span>
+      </div>
+      <p class="text-muted small mb-2">${kb.solucao}</p>
+      <div class="d-flex gap-3 text-secondary" style="font-size:0.7rem">
+        <span>👤 ${kb.autor}</span>
+        <span>📅 ${kb.data}</span>
+        <span>✅ Validado</span>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// === TABS & UTILS ===
+function switchTab(tabId, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel-view').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else {
+    const targetTab = Array.from(document.querySelectorAll('.tab')).find(t => t.getAttribute('onclick')?.includes(`'${tabId}'`));
+    if (targetTab) targetTab.classList.add('active');
+  }
+  const view = document.getElementById('view-' + tabId);
+  if (view) view.classList.add('active');
+}
+
+function toggleAtendimento() {
+  const panel = document.getElementById('atendimentoPanel');
+  const btn = document.getElementById('btnToggleAtendimento');
+  panel.classList.toggle('collapsed');
+  btn.classList.toggle('active');
+}
+
+let toastTimer;
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toastLayer5');
+  clearTimeout(toastTimer);
+  t.textContent = msg;
+  t.className = `toast-layer5 show ${type}`;
+  toastTimer = setTimeout(() => {
+    t.className = 'toast-layer5';
+  }, 3800);
+}
+
+// === INICIALIZAÇÃO ===
+renderKanban();
+renderTicketsTable();
+renderGamificacao();
+renderKnowledgeBase();
+showToast('🟢 Layer5 Helpdesk pronto! Teste a ligação ou o aplicativo técnico.', 'info');
+</script>
+</body>
+</html>
